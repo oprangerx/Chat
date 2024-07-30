@@ -1,3 +1,9 @@
+// Initialize Supabase
+const { createClient } = supabase;
+const supabaseUrl = 'https://zykbkseefmduxbgyaxsx.supabase.co'; // Your Supabase URL
+const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase key
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // Function to encode a string to Base64
 function encodeBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
@@ -37,122 +43,120 @@ function generateUniqueId() {
 }
 
 // Function to check if the user ID cookie exists
-function checkUserId() {
+async function checkUserId() {
     const userId = getCookie('user_id');
     if (userId) {
-        document.getElementById('set-username').style.display = 'none';
-        document.getElementById('chat-container').style.display = 'block';
+        const { data, error } = await supabase
+            .from('users') // Replace with your Supabase table name
+            .select('name')
+            .eq('id', userId)
+            .single();
+
+        if (error) console.error('Error checking user:', error);
+        else {
+            if (data) {
+                document.getElementById('set-username').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'block';
+            }
+        }
     } else {
         document.getElementById('chat-container').style.display = 'none';
     }
 }
 
-// Function to set user name and store it in a cookie
-function setUserName() {
+// Function to set user name and store it in Supabase
+async function setUserName() {
     const usernameInput = document.getElementById('username');
-    const username = usernameInput.value.trim(); // Trim leading and trailing whitespace
+    const username = usernameInput.value.trim();
 
     if (username) {
         const userId = generateUniqueId();
         setCookie('user_id', userId, 30); // Set cookie for 30 days
-        saveUsernameToFile(userId, username); // Save user ID and username to file
+        await saveUsernameToFile(userId, username); // Save user ID and username to Supabase
         document.getElementById('username').value = ''; // Clear the input field
         document.getElementById('set-username').style.display = 'none'; // Hide the username input
         document.getElementById('chat-container').style.display = 'block'; // Show chat container
     } else {
-        alert('Username cannot be empty'); // Alert the user if the username is empty
+        alert('Username cannot be empty');
     }
 }
 
 // Function to send a message with Base64 encoding
-function sendMessage() {
-    const userId = getCookie('user_id'); // Get the user ID from the cookie
+async function sendMessage() {
+    const userId = getCookie('user_id');
     const messageInput = document.getElementById('message');
-    const message = messageInput.value.trim(); // Trim leading and trailing whitespace
+    const message = messageInput.value.trim();
 
-    if (message) { // Check if the message is not empty
-        const fullMessage = `${userId}: ${message}`; // Combine user ID and message
-        console.log('Sending message:', fullMessage); // Debug log
-        const encryptedMessage = encodeBase64(fullMessage); // Encode combined message to Base64
-        console.log('Encrypted message:', encryptedMessage); // Debug log
+    if (message) {
+        const fullMessage = `${userId}: ${message}`;
+        const encryptedMessage = encodeBase64(fullMessage);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'send_message.php', true);
-        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                messageInput.value = ''; // Clear the input field
-                loadMessages(); // Call loadMessages after message is sent
-            }
-        };
-        xhr.send('message=' + encodeURIComponent(encryptedMessage));
+        const { data, error } = await supabase
+            .from('messages') // Replace with your Supabase table name
+            .insert([{ content: encryptedMessage }]);
+
+        if (error) console.error('Error sending message:', error);
+        else {
+            messageInput.value = '';
+            loadMessages();
+        }
     } else {
-        alert('Message cannot be empty'); // Alert the user if the message is empty
+        alert('Message cannot be empty');
     }
 }
 
 // Function to load and decode Base64 messages
-function loadMessages() {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', 'get_messages.php', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            const encodedMessages = xhr.responseText;
-            console.log('Loaded messages:', encodedMessages); // Debug log
+async function loadMessages() {
+    const { data, error } = await supabase
+        .from('messages') // Replace with your Supabase table name
+        .select('content')
+        .order('created_at', { ascending: true }); // Assuming you have a timestamp field
 
-            if (encodedMessages && encodedMessages !== "No messages yet.") {
-                // Split messages by the delimiter
-                const messagesArray = encodedMessages.split('||').filter(Boolean); // Filter out empty strings
-                console.log('Messages array:', messagesArray); // Debug log
-
-                // Decode each message
-                const decodedMessages = messagesArray.map(decodeBase64).filter(Boolean); // Filter out empty strings
-                console.log('Decoded messages:', decodedMessages); // Debug log
-
-                // Replace user IDs with names
-                replaceUserIdsWithNames(decodedMessages, function(replacedMessages) {
-                    document.getElementById('chat-box').innerHTML = replacedMessages.join('<br>');
-                });
-            } else {
-                document.getElementById('chat-box').innerHTML = encodedMessages; // Display the "No messages yet." message
-            }
+    if (error) console.error('Error loading messages:', error);
+    else {
+        const encodedMessages = data.map(row => row.content).join('||');
+        if (encodedMessages) {
+            const messagesArray = encodedMessages.split('||').filter(Boolean);
+            const decodedMessages = messagesArray.map(decodeBase64).filter(Boolean);
+            replaceUserIdsWithNames(decodedMessages, function(replacedMessages) {
+                document.getElementById('chat-box').innerHTML = replacedMessages.join('<br>');
+            });
+        } else {
+            document.getElementById('chat-box').innerHTML = 'No messages yet.';
         }
-    };
-    xhr.send();
+    }
 }
 
 // Function to replace user IDs with names
-function replaceUserIdsWithNames(messages, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', 'usernames.txt', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            const users = xhr.responseText.split('\n').reduce((acc, line) => {
-                const [id, name] = line.split('=');
-                if (id && name) {
-                    acc[id.trim()] = name.trim();
-                }
-                return acc;
-            }, {});
-            console.log('Users:', users); // Debug log
+async function replaceUserIdsWithNames(messages, callback) {
+    const { data, error } = await supabase
+        .from('users') // Replace with your Supabase table name
+        .select('id, name');
 
-            const replacedMessages = messages.map(message => {
-                const [id, text] = message.split(': ');
-                return (users[id] || id) + ': ' + (text || ''); // Ensure text is not undefined
-            });
+    if (error) console.error('Error fetching users:', error);
+    else {
+        const users = data.reduce((acc, user) => {
+            acc[user.id] = user.name;
+            return acc;
+        }, {});
 
-            callback(replacedMessages);
-        }
-    };
-    xhr.send();
+        const replacedMessages = messages.map(message => {
+            const [id, text] = message.split(': ');
+            return (users[id] || id) + ': ' + (text || '');
+        });
+
+        callback(replacedMessages);
+    }
 }
 
-// Function to save user ID and username to a file (simulated by sending to a PHP script)
-function saveUsernameToFile(userId, username) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'save_username.php', true);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send('user_id=' + encodeURIComponent(userId) + '&username=' + encodeURIComponent(username));
+// Function to save user ID and username to Supabase
+async function saveUsernameToFile(userId, username) {
+    const { data, error } = await supabase
+        .from('users') // Replace with your Supabase table name
+        .upsert({ id: userId, name: username });
+
+    if (error) console.error('Error saving username:', error);
+    else console.log('Username saved:', data);
 }
 
 // Check if the user ID cookie exists when the page loads
