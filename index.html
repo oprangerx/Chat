@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: url('background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+        }
+        #set-username, #chat-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.8); /* Slightly transparent background */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        #chat-container {
+            display: none; /* Hide chat container initially */
+        }
+        #chat-header {
+            width: 100%;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+        #chat-box {
+            width: 100%;
+            height: 50vh;
+            overflow-y: auto;
+            border: 1px solid rgba(204, 204, 204, 0.8); /* Slightly transparent border */
+            background: rgba(255, 255, 255, 0.8); /* Slightly transparent background */
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+            background-color: #dcf8c6; /* WhatsApp message background color */
+            align-self: flex-start;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding: 10px;
+            box-sizing: border-box;
+            margin-bottom: 10px; /* Add space between input and button */
+            border: 1px solid rgba(204, 204, 204, 0.8); /* Slightly transparent border */
+            background: rgba(255, 255, 255, 0.8); /* Slightly transparent background */
+            border-radius: 5px;
+        }
+        button {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding: 10px;
+            background-color: rgba(0, 123, 255, 0.8); /* Slightly transparent background */
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: rgba(0, 86, 179, 0.8); /* Slightly transparent background */
+        }
+    </style>
+    <script src="script.js" defer></script> <!-- Reference to your existing JavaScript file -->
+</head>
+<body>
+    <div id="set-username">
+        <input type="text" id="username" placeholder="Enter your username">
+        <button onclick="setUserName()">Set Username</button>
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-header">homieesss._</div>
+        <div id="chat-box"></div>
+        <div>
+            <input type="text" id="message" placeholder="Type a message">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</body>
+</html>
