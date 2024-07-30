@@ -1,7 +1,7 @@
 // Initialize Supabase
 const { createClient } = supabase;
 const supabaseUrl = 'https://zykbkseefmduxbgyaxsx.supabase.co'; // Your Supabase URL
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your Supabase key
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5a2Jrc2VlZm1kdXhiZ3lheHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjIzNTI4MDMsImV4cCI6MjAzNzkyODgwM30.omHREHAJ8ONTdmQNCsQNknV4l819iM-37KRTovGbeJ4'; // Replace with your Supabase key
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Function to encode a string to Base64
